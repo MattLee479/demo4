@@ -401,6 +401,8 @@
       enctype="multipart/form-data">
 
   <input type="hidden" name="access_key" value="aaaf7711-f0de-4fd5-81df-0b3244e6f178">
+  <input type="hidden" name="from_name" value="SB Movers">
+  <input type="hidden" name="subject" value="SB Movers Website Enquiry">
   <input type="checkbox" name="botcheck" class="hidden" style="display:none">
 
   <div class="form-group">
@@ -686,28 +688,44 @@
   document.getElementById('contactForm')?.addEventListener('submit', (e) => {});
 
   // Contact Form (Web3Forms inline success)
-  const contactForm = document.getElementById('contactForm');
-  const successMsg = document.getElementById('formSuccess');
+const contactForm = document.getElementById('contactForm');
+const successMsg = document.getElementById('formSuccess');
 
-  if (contactForm) {
-    contactForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (successMsg) successMsg.style.display = "none";
+if (contactForm) {
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (successMsg) successMsg.style.display = "none";
 
+    try {
       const formData = new FormData(contactForm);
+      // Optional: ensure subject/from_name always present
+      if (!formData.get('subject')) formData.append('subject', 'SB Movers Website Enquiry');
+      if (!formData.get('from_name')) formData.append('from_name', 'SB Movers');
+
       const response = await fetch("https://api.web3forms.com/submit", {
         method: "POST",
+        headers: { "Accept": "application/json" }, // helps get JSON error payloads
         body: formData
       });
 
-      if (response.ok) {
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && (data.success === true || data.code === 200)) {
         contactForm.reset();
         if (successMsg) successMsg.style.display = "block";
       } else {
-        alert("Sorry, something went wrong. Please try again.");
+        // Show the most useful message we can
+        const msg = (data && (data.message || data.error)) || `HTTP ${response.status}`;
+        alert(`Sorry, something went wrong:\n${msg}`);
+        console.error('Web3Forms error detail:', data);
       }
-    });
-  }
+    } catch (err) {
+      alert("Network error submitting the form. Please try again.");
+      console.error(err);
+    }
+  });
+}
+
 
   // Set current year
   document.getElementById('currentYear').textContent = new Date().getFullYear();
