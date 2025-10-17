@@ -687,44 +687,54 @@
   // Contact Form (legacy alert disabled; Web3Forms below handles submit)
   document.getElementById('contactForm')?.addEventListener('submit', (e) => {});
 
-  // Contact Form (Web3Forms inline success)
-const contactForm = document.getElementById('contactForm');
-const successMsg = document.getElementById('formSuccess');
+   // Contact Form (Web3Forms inline success)
+  const contactForm = document.getElementById('contactForm');
+  const successMsg  = document.getElementById('formSuccess');
 
-if (contactForm) {
-  contactForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (successMsg) successMsg.style.display = "none";
+  // Hide the attachments UI on free plan
+  const attachmentsInput = document.querySelector('input[name="attachments[]"]');
+  if (attachmentsInput) {
+    const group = attachmentsInput.closest('.form-group');
+    if (group) group.style.display = 'none';
+  }
 
-    try {
-      const formData = new FormData(contactForm);
-      // Optional: ensure subject/from_name always present
-      if (!formData.get('subject')) formData.append('subject', 'SB Movers Website Enquiry');
-      if (!formData.get('from_name')) formData.append('from_name', 'SB Movers');
+  if (contactForm) {
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (successMsg) successMsg.style.display = "none";
 
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: { "Accept": "application/json" }, // helps get JSON error payloads
-        body: formData
-      });
+      try {
+        const formData = new FormData(contactForm);
 
-      const data = await response.json().catch(() => ({}));
+        // Ensure optional helpful fields
+        if (!formData.get('subject'))   formData.append('subject', 'SB Movers Website Enquiry');
+        if (!formData.get('from_name')) formData.append('from_name', 'SB Movers');
 
-      if (response.ok && (data.success === true || data.code === 200)) {
-        contactForm.reset();
-        if (successMsg) successMsg.style.display = "block";
-      } else {
-        // Show the most useful message we can
-        const msg = (data && (data.message || data.error)) || `HTTP ${response.status}`;
-        alert(`Sorry, something went wrong:\n${msg}`);
-        console.error('Web3Forms error detail:', data);
+        // Remove files so free plan doesn't error
+        formData.delete('attachments[]');
+
+        const response = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: { "Accept": "application/json" },
+          body: formData
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && (data.success === true || data.code === 200)) {
+          contactForm.reset();
+          if (successMsg) successMsg.style.display = "block";
+        } else {
+          const msg = (data && (data.message || data.error)) || `HTTP ${response.status}`;
+          alert(`Sorry, something went wrong:\n${msg}`);
+          console.error('Web3Forms error detail:', data);
+        }
+      } catch (err) {
+        alert("Network error submitting the form. Please try again.");
+        console.error(err);
       }
-    } catch (err) {
-      alert("Network error submitting the form. Please try again.");
-      console.error(err);
-    }
-  });
-}
+    });
+  }
 
 
   // Set current year
