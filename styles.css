@@ -751,6 +751,12 @@ img {
 
 @media print { .whatsapp-btn{ display:none; } }
 
+/* Desktop-only: shrink WhatsApp button ~30% */
+@media (min-width: 1024px){
+  .whatsapp-btn{
+    --wa-size: calc(clamp(56px, 8vw, 90px) * 0.7); /* 30% smaller */
+  }
+}
 
 /* Mobile: slightly fewer lines before clamp */
 @media (max-width: 639.98px){
